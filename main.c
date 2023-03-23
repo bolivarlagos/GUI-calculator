@@ -1,15 +1,14 @@
 #include <gtk/gtk.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define MAX_BUTTONS 10
-#define MAX_OPERATORS 6
+#define MAX_BUTTONS 16
 
 GtkWidget *screen;
 char number_container[MAX_BUTTONS];
 char final_result[MAX_BUTTONS];
+char *APP_NAME = "Calculator";
 
 int first_number, second_number;
 int result = 0;
@@ -19,9 +18,9 @@ typedef struct
 {
   char *value;
   int col, row, width, height;
-} Positions;
+} Position;
 
-Positions coordinates[MAX_BUTTONS] =
+Position coordinates[MAX_BUTTONS] =
 {
   {"0", 0, 5, 1, 1},
   {"1", 0, 4, 1, 1},
@@ -33,10 +32,6 @@ Positions coordinates[MAX_BUTTONS] =
   {"7", 0, 2, 1, 1},
   {"8", 1, 2, 1, 1},
   {"9", 2, 2, 1, 1},
-};
-
-Positions ope_coordinates[MAX_OPERATORS] =
-{
   {"=", 1, 5, 1, 1},
   {"C", 2, 5, 1, 1},
   {"+", 3, 2, 1, 1},
@@ -103,41 +98,27 @@ static void operator_button_handler(GtkWidget *widget, char *data)
   }
 }
 
-static void make_single_number_button(GtkWidget *grid, GtkWidget *btn, Positions pos)
+static void make_button(GtkWidget *grid, GtkWidget *btn, Position pos, bool control)
 {
   btn = gtk_button_new_with_label(pos.value);
-  g_signal_connect(btn, "clicked", G_CALLBACK(number_button_handler), pos.value);
+  g_signal_connect(btn, "clicked", 
+    G_CALLBACK(control ? number_button_handler : operator_button_handler), pos.value);
   gtk_grid_attach(GTK_GRID(grid), btn, pos.col, pos.row, pos.width, pos.height);
 }
 
-static void make_single_operator_button(GtkWidget *grid, GtkWidget *btn, Positions ope_pos)
-{
-  btn = gtk_button_new_with_label(ope_pos.value);
-  g_signal_connect(btn, "clicked", G_CALLBACK(operator_button_handler), ope_pos.value);
-  gtk_grid_attach(GTK_GRID(grid), btn, ope_pos.col, ope_pos.row, ope_pos.width, ope_pos.height);
-}
-
-static void make_all_number_buttons(GtkWidget *grid, GtkWidget *btn)
+static void make_all_buttons(GtkWidget *grid, GtkWidget *btn)
 {
   for (int i = 0; i < MAX_BUTTONS; i++)
   {
-    make_single_number_button(grid, btn, coordinates[i]);
-  }
-}
-
-static void make_all_operator_buttons(GtkWidget *grid, GtkWidget *btn)
-{
-  for (int i = 0; i < MAX_OPERATORS; i++)
-  {
-    make_single_operator_button(grid, btn, ope_coordinates[i]);
+    bool is_number = i < 10;
+    make_button(grid, btn, coordinates[i], is_number);
   }
 }
 
 static void activate(GtkApplication *app)
 {
   GtkWidget *window;
-  GtkWidget *number_buttons;
-  GtkWidget *operator_buttons;
+  GtkWidget *buttons;
   GtkWidget *grid;
 
   window = gtk_application_window_new(app);
@@ -147,10 +128,9 @@ static void activate(GtkApplication *app)
   gtk_grid_attach(GTK_GRID(grid), screen, 0, 0, 12, 1);
 
   gtk_window_set_child(GTK_WINDOW(window), grid);
-  gtk_window_set_title(GTK_WINDOW(window), "Calculator");
+  gtk_window_set_title(GTK_WINDOW(window), APP_NAME);
 
-  make_all_number_buttons(grid, number_buttons);
-  make_all_operator_buttons(grid, operator_buttons);
+  make_all_buttons(grid, buttons);
 
   gtk_widget_show(window);
 }
